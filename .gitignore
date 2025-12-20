@@ -9,7 +9,6 @@ frontend/dist/
 frontend/build/
 backend/dist/
 backend/build/
-*.spec
 
 # Python
 __pycache__/
