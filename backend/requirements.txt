@@ -1,0 +1,6 @@
+PyMuPDF==1.26.4
+requests~=2.32.3
+SQLAlchemy~=2.0.41
+uvicorn~=0.38.0
+fastapi~=0.119.1
+pydantic~=2.11.7
