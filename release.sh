@@ -1,4 +1,3 @@
-cat > release.sh << 'RELEASE'
 #!/bin/bash
 set -e
 
@@ -81,6 +80,3 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "Track: https://github.com/$repo/actions"
     echo "Release: https://github.com/$repo/releases/tag/v$new"
 fi
-RELEASE
-
-chmod +x release.sh
