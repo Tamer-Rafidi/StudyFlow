@@ -1,6 +1,6 @@
 {
   "name": "StudyFlow",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI-powered study assistant",
   "main": "electron/main.js",
   "author": "Tamer Rafidi <tamer.rafidi10@gmail.com.com>",
@@ -53,7 +53,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "build/icons/icon.ico",
@@ -63,7 +65,10 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "icon": "build/icons/icon.icns",
@@ -72,7 +77,10 @@
       "gatekeeperAssess": false
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "icon": "build/icons/icon.png",
       "category": "Education",
       "artifactName": "${productName}-${version}.${ext}"
