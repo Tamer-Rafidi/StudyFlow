@@ -20,8 +20,8 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
-    "appId": "com.yourname.studyassistant",
-    "productName": "AI Study Assistant",
+    "appId": "com.Tamer-Rafid.StudyFlow",
+    "productName": "StudyFlow",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -45,8 +45,8 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "yourusername",
-      "repo": "ai-study-assistant",
+      "owner": "Tamer-Rafidi",
+      "repo": "StudyFlow",
       "releaseType": "release"
     },
     "win": {
@@ -90,7 +90,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "AI Study Assistant",
+      "shortcutName": "StudyFlow",
       "perMachine": false
     }
   },
