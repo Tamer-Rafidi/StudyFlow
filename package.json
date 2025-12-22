@@ -35,8 +35,9 @@
     ],
     "extraResources": [
       {
-        "from": "backend/dist/backend${os === 'win32' ? '.exe' : ''}",
-        "to": "backend/backend${os === 'win32' ? '.exe' : ''}"
+        "from": "backend/dist/",
+        "to": "backend/",
+        "filter": ["**/*"]
       },
       {
         "from": "frontend/dist",
@@ -59,7 +60,13 @@
         }
       ],
       "icon": "build/icons/icon.ico",
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "extraResources": [
+        {
+          "from": "backend/dist/backend.exe",
+          "to": "backend/backend.exe"
+        }
+      ]
     },
     "mac": {
       "target": [
@@ -74,7 +81,13 @@
       "icon": "build/icons/icon.icns",
       "category": "public.app-category.education",
       "hardenedRuntime": true,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "extraResources": [
+        {
+          "from": "backend/dist/backend",
+          "to": "backend/backend"
+        }
+      ]
     },
     "linux": {
       "target": [
@@ -83,7 +96,13 @@
       ],
       "icon": "build/icons/icon.png",
       "category": "Education",
-      "artifactName": "${productName}-${version}.${ext}"
+      "artifactName": "${productName}-${version}.${ext}",
+      "extraResources": [
+        {
+          "from": "backend/dist/backend",
+          "to": "backend/backend"
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,

@@ -10,8 +10,18 @@ jobs:
     runs-on: ${{ matrix.os }}
     
     strategy:
+      fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            platform: win
+            artifact: '*.exe'
+          - os: macos-latest
+            platform: mac
+            artifact: '*.dmg'
+          - os: ubuntu-latest
+            platform: linux
+            artifact: '*.{AppImage,deb}'
     
     steps:
       - name: Checkout code
@@ -38,6 +48,27 @@ jobs:
           cd backend
           pyinstaller backend.spec
       
+      # Verify backend was built
+      - name: Verify backend build (Windows)
+        if: matrix.platform == 'win'
+        run: |
+          if (!(Test-Path "backend/dist/backend.exe")) {
+            Write-Error "Backend executable not found!"
+            exit 1
+          }
+          Write-Host "Backend executable found"
+        shell: pwsh
+      
+      - name: Verify backend build (Unix)
+        if: matrix.platform != 'win'
+        run: |
+          if [ ! -f "backend/dist/backend" ]; then
+            echo "Backend executable not found!"
+            exit 1
+          fi
+          echo "Backend executable found"
+          chmod +x backend/dist/backend
+      
       - name: Install Node dependencies
         run: npm install
       
@@ -50,15 +81,16 @@ jobs:
       - name: Build Electron app
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build:${{ matrix.platform }}
+      
+      - name: Publish to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run publish
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}-build
-          path: |
-            dist/*.exe
-            dist/*.dmg
-            dist/*.AppImage
-            dist/*.deb
+          name: ${{ matrix.platform }}-build
+          path: dist/${{ matrix.artifact }}
           if-no-files-found: warn
