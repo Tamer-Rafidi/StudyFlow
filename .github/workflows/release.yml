@@ -57,6 +57,8 @@ jobs:
             exit 1
           }
           Write-Host "Backend executable found"
+          # Wait a moment to ensure file handles are released
+          Start-Sleep -Seconds 2
         shell: pwsh
       
       - name: Verify backend build (Unix)
@@ -71,6 +73,12 @@ jobs:
       
       - name: Install Node dependencies
         run: npm install
+      
+      - name: Check build resources
+        run: |
+          echo "Checking for build resources..."
+          ls -la build/ || mkdir -p build/icons
+        shell: bash
       
       - name: Build frontend
         run: |
