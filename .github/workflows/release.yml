@@ -145,6 +145,9 @@ jobs:
         run: |
           if (Test-Path dist) { Remove-Item -Recurse -Force dist }
           
+          # Configure PowerShell to treat all errors as terminating
+          $ErrorActionPreference = "Stop"
+          
           # Try building up to 3 times with delays (to handle file locks)
           $maxAttempts = 3
           $attempt = 1
@@ -153,17 +156,29 @@ jobs:
           while ($attempt -le $maxAttempts -and -not $success) {
             Write-Host "Build attempt $attempt of $maxAttempts..."
             
-            try {
-              npm run build:${{ matrix.platform }}
+            # Clear any previous errors
+            $Error.Clear()
+            
+            # Run the build and capture exit code
+            npm run build:${{ matrix.platform }}
+            $buildExitCode = $LASTEXITCODE
+            
+            if ($buildExitCode -eq 0) {
               $success = $true
               Write-Host "Build succeeded!"
             }
-            catch {
-              Write-Host "Build attempt $attempt failed: $_"
+            else {
+              Write-Host "Build attempt $attempt failed with exit code: $buildExitCode"
               
               if ($attempt -lt $maxAttempts) {
                 Write-Host "Waiting 15 seconds before retry..."
                 Start-Sleep -Seconds 15
+                
+                # Clean dist directory before retry
+                if (Test-Path dist) { 
+                  Write-Host "Cleaning dist directory..."
+                  Remove-Item -Recurse -Force dist 
+                }
               }
               else {
                 Write-Error "All build attempts failed"

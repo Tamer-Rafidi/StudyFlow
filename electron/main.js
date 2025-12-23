@@ -354,14 +354,35 @@ function getBackendPath() {
   let backendPath;
 
   if (app.isPackaged) {
-    // Production: backend is in resources
-    backendPath = path.join(process.resourcesPath, 'backend', backendExe);
+    const possiblePaths = [
+      // New location: unpacked from ASAR
+      path.join(process.resourcesPath, 'app.asar.unpacked', 'backend-staging', backendExe),
+      // Fallback: old location in resources
+      path.join(process.resourcesPath, 'backend', backendExe),
+      // Another fallback: directly in resources
+      path.join(process.resourcesPath, 'backend-staging', backendExe)
+    ];
+
+    const fs = require('fs');
+    for (const testPath of possiblePaths) {
+      if (fs.existsSync(testPath)) {
+        backendPath = testPath;
+        log.info(`Found backend at: ${backendPath}`);
+        break;
+      } else {
+        log.info(`Backend not found at: ${testPath}`);
+      }
+    }
+
+    if (!backendPath) {
+      log.error('Backend not found in any expected location!');
+      log.error('Searched paths:', possiblePaths);
+      return null;
+    }
   } else {
-    // Development: backend is in backend/dist
     backendPath = path.join(__dirname, '../backend/dist', backendExe);
   }
 
-  // Check if file exists
   const fs = require('fs');
   if (!fs.existsSync(backendPath)) {
     log.error(`Backend not found at: ${backendPath}`);

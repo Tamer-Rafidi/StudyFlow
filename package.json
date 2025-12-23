@@ -29,18 +29,15 @@
     "files": [
       "electron/**/*",
       "frontend/dist/**/*",
+      "backend-staging/**/*",
       "!backend/**/*",
       "!frontend/src/**/*",
       "!frontend/node_modules/**/*"
     ],
+    "asarUnpack": [
+      "backend-staging/**/*"
+    ],
     "extraResources": [
-      {
-        "from": "backend/dist/",
-        "to": "backend/",
-        "filter": [
-          "**/*"
-        ]
-      },
       {
         "from": "frontend/dist",
         "to": "frontend"
@@ -61,16 +58,7 @@
           ]
         }
       ],
-      "artifactName": "${productName}-Setup-${version}.${ext}",
-      "extraResources": [
-        {
-          "from": "backend-staging/",
-          "to": "backend/",
-          "filter": [
-            "backend.exe"
-          ]
-        }
-      ]
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
       "target": [
@@ -103,9 +91,7 @@
         {
           "from": "backend/dist/backend",
           "to": "backend/backend",
-          "filter": [
-            "**/*"
-          ]
+          "filter": ["**/*"]
         }
       ],
       "asar": true
