@@ -26,8 +26,8 @@ if (!IS_DEV && app.isPackaged) {
   // Configure GitHub releases
   autoUpdater.setFeedURL({
     provider: 'github',
-    owner: 'Tamer-Rafidi',     // REPLACE with your GitHub username
-    repo: 'StudyFlow'  // REPLACE with your repo name
+    owner: 'Tamer-Rafidi',
+    repo: 'StudyFlow'
   });
 
   // Check for updates on startup
@@ -308,14 +308,14 @@ async function initializeApp() {
   // Wait for backend to be ready
   updateStatus('Waiting for backend...');
   
-  if (await waitForBackend()) {
+  if (await waitForBackend(90000)) {  // 90 second timeout
     log.info('Backend is ready!');
     updateStatus('Loading application...');
     
     // Load frontend (served from backend)
     mainWindow.loadURL(`http://localhost:${BACKEND_PORT}`);
   } else {
-    showError('Backend failed to start within 60 seconds. Please check logs.');
+    showError('Backend failed to start within 90 seconds. Please check logs.');
   }
 }
 
@@ -354,6 +354,8 @@ function getBackendPath() {
   let backendPath;
 
   if (app.isPackaged) {
+    // Production: backend is unpacked from ASAR in app.asar.unpacked
+    // Try multiple possible locations
     const possiblePaths = [
       // New location: unpacked from ASAR
       path.join(process.resourcesPath, 'app.asar.unpacked', 'backend-staging', backendExe),
@@ -380,9 +382,11 @@ function getBackendPath() {
       return null;
     }
   } else {
+    // Development: backend is in backend/dist
     backendPath = path.join(__dirname, '../backend/dist', backendExe);
   }
 
+  // Check if file exists
   const fs = require('fs');
   if (!fs.existsSync(backendPath)) {
     log.error(`Backend not found at: ${backendPath}`);
@@ -434,8 +438,8 @@ function checkBackendHealth() {
       port: BACKEND_PORT,
       path: '/api/health',
       method: 'GET',
-      timeout: 3000,
-      family: 4  // Force IPv4
+      timeout: 5000,  
+      family: 4  
     };
 
     const req = http.request(options, (res) => {
@@ -446,26 +450,34 @@ function checkBackendHealth() {
       });
       
       res.on('end', () => {
+        log.info(`Health check response: status=${res.statusCode}, length=${data.length} bytes`);
+        
         try {
           const parsed = JSON.parse(data);
           
           if (res.statusCode === 200) {
+            log.info(`Health check SUCCESS: ${parsed.status}`);
             resolve({ success: true, data: parsed });
           } else {
-            reject(new Error(`Status ${res.statusCode}`));
+            log.warn(`Health check got non-200: ${res.statusCode}`);
+            reject(new Error(`Status ${res.statusCode}: ${data}`));
           }
         } catch (e) {
+          log.error('Health check parse error:', e.message);
+          log.error('Raw response:', data);
           reject(new Error('Invalid JSON response'));
         }
       });
     });
 
     req.on('error', (error) => {
+      log.debug(`Health check request error: ${error.message}`);
       reject(error);
     });
     
     req.on('timeout', () => {
       req.destroy();
+      log.debug('Health check timeout after 5 seconds');
       reject(new Error('Request timeout'));
     });
 
@@ -473,25 +485,33 @@ function checkBackendHealth() {
   });
 }
 
-async function waitForBackend(timeout = 60000) {
+async function waitForBackend(timeout = 90000) {
   const start = Date.now();
   let attempts = 0;
 
   updateStatus('Connecting to backend...');
   log.info('Starting backend health checks...');
+  log.info(`Will timeout after ${timeout / 1000} seconds`);
 
   while (Date.now() - start < timeout) {
     attempts++;
+    const elapsed = Math.round((Date.now() - start) / 1000);
     
     try {
+      log.info(`[Attempt ${attempts}] Checking backend health... (${elapsed}s elapsed)`);
+      
       // Use native HTTP module (works better with localhost on Windows)
       const result = await checkBackendHealth();
       
-      if (result.success) {
-        log.info('✓ Backend health check PASSED!');
-        log.info('  Status:', result.data.status);
+      if (result && result.success) {
+        log.info('Backend health check PASSED!');
+        log.info('Status:', result.data.status);
+        log.info(`Total attempts: ${attempts}`);
+        log.info(`Total time: ${elapsed}s`);
         updateStatus('Backend connected!');
         return true;
+      } else {
+        log.warn('Health check returned but success=false');
       }
       
     } catch (error) {
@@ -499,17 +519,18 @@ async function waitForBackend(timeout = 60000) {
         log.info('Waiting for backend to start...');
       }
       
-      if (attempts % 10 === 0) {
-        log.info(`Still waiting... (${attempts} attempts, ${Math.round((Date.now() - start) / 1000)}s)`);
-        updateStatus(`Connecting to backend... (${Math.round((Date.now() - start) / 1000)}s)`);
-      }
+      log.debug(`[Attempt ${attempts}] Failed: ${error.message}`);
       
-      await sleep(1000);
+      if (attempts % 5 === 0) {
+        log.info(`Still waiting... (${attempts} attempts, ${elapsed}s)`);
+        updateStatus(`Connecting to backend... (${elapsed}s)`);
+      }
+      await sleep(3000);
     }
   }
 
-  log.error(`✗ Backend health check TIMEOUT after ${attempts} attempts`);
-  log.error(`  Elapsed time: ${Math.round((Date.now() - start) / 1000)} seconds`);
+  log.error(`Backend health check TIMEOUT after ${attempts} attempts ✗✗✗`);
+  log.error(`Elapsed time: ${Math.round((Date.now() - start) / 1000)} seconds`);
   return false;
 }
 

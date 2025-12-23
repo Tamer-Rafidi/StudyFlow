@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Header, Form, Depe
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -76,10 +77,22 @@ def find_free_port(start_port=8000, max_attempts=10):
                 continue
     raise RuntimeError(f"Could not find a free port in range {start_port}-{start_port + max_attempts}")
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    init_db()
+    print("Database initialized")
+    print("Backend is ready!")
+    print(f"Listening on http://127.0.0.1:8000")
+    yield
+    # Shutdown (if needed)
+    print("Shutting down...")
+
 # Initialize FastAPI app
 app = FastAPI(
     title="AI Study Assistant API",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # CORS middleware
@@ -114,11 +127,12 @@ if FRONTEND_DIR.exists():
     files = list(FRONTEND_DIR.rglob('*'))
     print(f"Frontend files found: {len(files)}")
 
-# Initialize database on startup
-@app.on_event("startup")
-def startup_event():
-    init_db()
-    print("Database initialized")
+# # Initialize database on startup
+# @app.on_event("startup")
+# def startup_event():
+#     init_db()
+#     print("Database initialized")
+
 
 # ============================================================================
 # HELPER FUNCTION - Get AI Service from Header
