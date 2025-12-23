@@ -77,7 +77,12 @@ jobs:
       - name: Check build resources
         run: |
           echo "Checking for build resources..."
-          ls -la build/ || mkdir -p build/icons
+          mkdir -p build/icons
+          # Remove any existing icon files that might cause issues
+          rm -f build/icons/*.icns build/icons/*.ico build/icons/*.png 2>/dev/null || true
+          # Remove any icon files in root that electron-builder might find
+          rm -f *.icns *.ico icon.png 2>/dev/null || true
+          ls -la build/ || true
         shell: bash
       
       - name: Build frontend

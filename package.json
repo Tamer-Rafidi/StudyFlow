@@ -1,6 +1,6 @@
 {
   "name": "StudyFlow",
-  "version": "1.0.7",
+  "version": "1.0.4",
   "description": "AI-powered study assistant",
   "main": "electron/main.js",
   "author": "Tamer Rafidi <tamer.rafidi10@gmail.com.com>",
@@ -37,9 +37,7 @@
       {
         "from": "backend/dist/",
         "to": "backend/",
-        "filter": [
-          "**/*"
-        ]
+        "filter": ["**/*"]
       },
       {
         "from": "frontend/dist",
@@ -74,13 +72,13 @@
         {
           "target": "dmg",
           "arch": [
-            "x64",
-            "arm64"
+            "x64"
           ]
         }
       ],
+      "icon": null,
       "category": "public.app-category.education",
-      "hardenedRuntime": true,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "extraResources": [
         {
