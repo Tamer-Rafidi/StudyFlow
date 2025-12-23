@@ -16,9 +16,10 @@ jobs:
           - os: windows-latest
             platform: win
             artifact: '*.exe'
-          - os: macos-latest
-            platform: mac
-            artifact: '*.dmg'
+          # Temporarily disable macOS until icon issue is resolved
+          # - os: macos-latest
+          #   platform: mac
+          #   artifact: '*.dmg'
           - os: ubuntu-latest
             platform: linux
             artifact: '*.{AppImage,deb}'
