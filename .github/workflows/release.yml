@@ -58,7 +58,26 @@ jobs:
             exit 1
           }
           Write-Host "Backend executable found"
-          # Wait a moment to ensure file handles are released
+          Write-Host "Waiting for file handles to release..."
+          Start-Sleep -Seconds 5
+        shell: pwsh
+      
+      - name: Copy backend to staging (Windows)
+        if: matrix.platform == 'win'
+        run: |
+          # Create staging directory
+          New-Item -ItemType Directory -Force -Path "backend-staging"
+          
+          # Use robocopy which handles locked files better
+          robocopy "backend/dist" "backend-staging" "backend.exe" /COPY:DAT /R:3 /W:2
+          
+          # robocopy returns 0-7 for success, 8+ for errors
+          if ($LASTEXITCODE -ge 8) {
+            Write-Error "Failed to copy backend.exe"
+            exit 1
+          }
+          
+          Write-Host "Backend copied to staging"
           Start-Sleep -Seconds 2
         shell: pwsh
       

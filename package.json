@@ -37,9 +37,7 @@
       {
         "from": "backend/dist/",
         "to": "backend/",
-        "filter": [
-          "**/*"
-        ]
+        "filter": ["**/*"]
       },
       {
         "from": "frontend/dist",
@@ -64,11 +62,9 @@
       "artifactName": "${productName}-Setup-${version}.${ext}",
       "extraResources": [
         {
-          "from": "backend/dist/",
+          "from": "backend-staging/",
           "to": "backend/",
-          "filter": [
-            "backend.exe"
-          ]
+          "filter": ["backend.exe"]
         }
       ]
     },
@@ -103,9 +99,7 @@
         {
           "from": "backend/dist/backend",
           "to": "backend/backend",
-          "filter": [
-            "**/*"
-          ]
+          "filter": ["**/*"]
         }
       ],
       "asar": true
