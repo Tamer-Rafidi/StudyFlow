@@ -68,6 +68,16 @@ jobs:
           # Create staging directory
           New-Item -ItemType Directory -Force -Path "backend-staging"
           
+          # Disable Windows Defender real-time monitoring for build directories
+          # This prevents file locking during the build
+          try {
+            Add-MpPreference -ExclusionPath "$PWD\backend-staging" -ErrorAction SilentlyContinue
+            Add-MpPreference -ExclusionPath "$PWD\dist" -ErrorAction SilentlyContinue
+            Write-Host "Added Windows Defender exclusions"
+          } catch {
+            Write-Host "Could not add Defender exclusions (may require admin)"
+          }
+          
           # Use robocopy which handles locked files better
           robocopy "backend/dist" "backend-staging" "backend.exe" /COPY:DAT /R:3 /W:2
           
@@ -91,7 +101,10 @@ jobs:
           }
           
           Write-Host "Verified: backend.exe exists in staging"
-          Start-Sleep -Seconds 2
+          
+          # Wait longer for any antivirus scanning to complete
+          Write-Host "Waiting for file to be released by antivirus..."
+          Start-Sleep -Seconds 10
         shell: pwsh
       
       - name: Verify backend build (Unix)
@@ -131,7 +144,35 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if (Test-Path dist) { Remove-Item -Recurse -Force dist }
-          npm run build:${{ matrix.platform }}
+          
+          # Try building up to 3 times with delays (to handle file locks)
+          $maxAttempts = 3
+          $attempt = 1
+          $success = $false
+          
+          while ($attempt -le $maxAttempts -and -not $success) {
+            Write-Host "Build attempt $attempt of $maxAttempts..."
+            
+            try {
+              npm run build:${{ matrix.platform }}
+              $success = $true
+              Write-Host "Build succeeded!"
+            }
+            catch {
+              Write-Host "Build attempt $attempt failed: $_"
+              
+              if ($attempt -lt $maxAttempts) {
+                Write-Host "Waiting 15 seconds before retry..."
+                Start-Sleep -Seconds 15
+              }
+              else {
+                Write-Error "All build attempts failed"
+                exit 1
+              }
+            }
+            
+            $attempt++
+          }
         shell: pwsh
       
       - name: Publish to GitHub Release
