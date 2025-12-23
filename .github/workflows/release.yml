@@ -123,15 +123,18 @@ jobs:
       - name: Check build resources
         run: |
           echo "Checking for build resources..."
-          mkdir -p build
-          # Remove problematic nested icons directory
-          rm -rf build/icons/icons 2>/dev/null || true
-          # Remove any icon files that might cause issues
-          rm -f build/icons/*.icns build/icons/*.ico 2>/dev/null || true
-          rm -f *.icns *.ico icon.png 2>/dev/null || true
-          echo "Build directory contents:"
-          ls -la build/ || true
-        shell: bash
+          
+          # COMPLETELY REMOVE build directory to prevent icon issues
+          if (Test-Path "build") {
+            Write-Host "Removing build directory to prevent icon conversion issues..."
+            Remove-Item -Recurse -Force "build"
+          }
+          
+          # Recreate empty build directory
+          New-Item -ItemType Directory -Force -Path "build" | Out-Null
+          
+          Write-Host "Build directory cleaned"
+        shell: pwsh
       
       - name: Build frontend
         run: |

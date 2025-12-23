@@ -22,6 +22,7 @@
   "build": {
     "appId": "com.Tamer-Rafid.StudyFlow",
     "productName": "StudyFlow",
+    "icon": null,
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -58,6 +59,7 @@
           ]
         }
       ],
+      "icon": null,
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
@@ -91,9 +93,7 @@
         {
           "from": "backend/dist/backend",
           "to": "backend/backend",
-          "filter": [
-            "**/*"
-          ]
+          "filter": ["**/*"]
         }
       ],
       "asar": true
