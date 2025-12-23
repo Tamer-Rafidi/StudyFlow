@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write  
+
 jobs:
   release:
     runs-on: ${{ matrix.os }}
@@ -142,61 +145,26 @@ jobs:
           npm install
           npm run build
       
-      - name: Build Electron app
+      - name: Build Electron app (without publish)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if (Test-Path dist) { Remove-Item -Recurse -Force dist }
           
-          # Configure PowerShell to treat all errors as terminating
-          $ErrorActionPreference = "Stop"
-          
-          # Try building up to 3 times with delays (to handle file locks)
-          $maxAttempts = 3
-          $attempt = 1
-          $success = $false
-          
-          while ($attempt -le $maxAttempts -and -not $success) {
-            Write-Host "Build attempt $attempt of $maxAttempts..."
-            
-            # Clear any previous errors
-            $Error.Clear()
-            
-            # Run the build and capture exit code
-            npm run build:${{ matrix.platform }}
-            $buildExitCode = $LASTEXITCODE
-            
-            if ($buildExitCode -eq 0) {
-              $success = $true
-              Write-Host "Build succeeded!"
-            }
-            else {
-              Write-Host "Build attempt $attempt failed with exit code: $buildExitCode"
-              
-              if ($attempt -lt $maxAttempts) {
-                Write-Host "Waiting 15 seconds before retry..."
-                Start-Sleep -Seconds 15
-                
-                # Clean dist directory before retry
-                if (Test-Path dist) { 
-                  Write-Host "Cleaning dist directory..."
-                  Remove-Item -Recurse -Force dist 
-                }
-              }
-              else {
-                Write-Error "All build attempts failed"
-                exit 1
-              }
-            }
-            
-            $attempt++
-          }
+          # Build without publishing (just create the .exe)
+          npm run build:${{ matrix.platform }}
         shell: pwsh
       
-      - name: Publish to GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*.exe
+            dist/*.blockmap
+          draft: false
+          prerelease: false
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run publish
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

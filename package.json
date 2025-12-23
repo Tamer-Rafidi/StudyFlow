@@ -44,12 +44,6 @@
         "to": "frontend"
       }
     ],
-    "publish": {
-      "provider": "github",
-      "owner": "Tamer-Rafidi",
-      "repo": "StudyFlow",
-      "releaseType": "release"
-    },
     "win": {
       "target": [
         {
@@ -93,9 +87,7 @@
         {
           "from": "backend/dist/backend",
           "to": "backend/backend",
-          "filter": [
-            "**/*"
-          ]
+          "filter": ["**/*"]
         }
       ],
       "asar": true
