@@ -16,10 +16,9 @@ jobs:
           - os: windows-latest
             platform: win
             artifact: '*.exe'
-          # Temporarily disable macOS until icon issue is resolved
-          # - os: macos-latest
-          #   platform: mac
-          #   artifact: '*.dmg'
+          - os: macos-latest
+            platform: mac
+            artifact: '*.dmg'
           - os: ubuntu-latest
             platform: linux
             artifact: '*.{AppImage,deb}'
@@ -78,11 +77,13 @@ jobs:
       - name: Check build resources
         run: |
           echo "Checking for build resources..."
-          mkdir -p build/icons
-          # Remove any existing icon files that might cause issues
-          rm -f build/icons/*.icns build/icons/*.ico build/icons/*.png 2>/dev/null || true
-          # Remove any icon files in root that electron-builder might find
+          mkdir -p build
+          # Remove problematic nested icons directory
+          rm -rf build/icons/icons 2>/dev/null || true
+          # Remove any icon files that might cause issues
+          rm -f build/icons/*.icns build/icons/*.ico 2>/dev/null || true
           rm -f *.icns *.ico icon.png 2>/dev/null || true
+          echo "Build directory contents:"
           ls -la build/ || true
         shell: bash
       
@@ -95,7 +96,10 @@ jobs:
       - name: Build Electron app
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run build:${{ matrix.platform }}
+        run: |
+          # Clean dist directory to prevent "file already exists" errors
+          rm -rf dist
+          npm run build:${{ matrix.platform }}
       
       - name: Publish to GitHub Release
         env:

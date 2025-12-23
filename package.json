@@ -37,9 +37,7 @@
       {
         "from": "backend/dist/",
         "to": "backend/",
-        "filter": [
-          "**/*"
-        ]
+        "filter": ["**/*"]
       },
       {
         "from": "frontend/dist",
@@ -99,9 +97,11 @@
       "extraResources": [
         {
           "from": "backend/dist/backend",
-          "to": "backend/backend"
+          "to": "backend/backend",
+          "filter": ["**/*"]
         }
-      ]
+      ],
+      "asar": true
     },
     "nsis": {
       "oneClick": false,
