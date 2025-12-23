@@ -1,6 +1,6 @@
 {
   "name": "StudyFlow",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "AI-powered study assistant",
   "main": "electron/main.js",
   "author": "Tamer Rafidi <tamer.rafidi10@gmail.com.com>",
@@ -91,7 +91,9 @@
         {
           "from": "backend/dist/backend",
           "to": "backend/backend",
-          "filter": ["**/*"]
+          "filter": [
+            "**/*"
+          ]
         }
       ],
       "asar": true
