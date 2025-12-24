@@ -106,9 +106,41 @@ app.add_middleware(
 
 # Determine paths
 if getattr(sys, 'frozen', False):
-    FRONTEND_DIR = Path(sys._MEIPASS) / 'frontend'
+    # Running as PyInstaller bundle
+    
+    # Get frontend dir from environment variable (set by Electron)
+    frontend_from_env = os.environ.get('FRONTEND_DIR')
+    
+    if frontend_from_env and os.path.exists(frontend_from_env):
+        # Use the path provided by Electron
+        FRONTEND_DIR = Path(frontend_from_env)
+        print(f"Using frontend from environment: {FRONTEND_DIR}")
+    else:
+        # Fallback: try to find it relative to the executable
+        # In production, frontend is in resources/frontend (not in _MEIPASS)
+        exe_dir = Path(sys.executable).parent
+        
+        # Try multiple possible locations
+        possible_paths = [
+            exe_dir.parent / 'frontend',  # resources/frontend
+            exe_dir.parent.parent / 'frontend',  # app/resources/frontend
+            Path(sys._MEIPASS) / 'frontend',  # inside bundle (last resort)
+        ]
+        
+        FRONTEND_DIR = None
+        for path in possible_paths:
+            if path.exists():
+                FRONTEND_DIR = path
+                print(f"Found frontend at: {FRONTEND_DIR}")
+                break
+        
+        if not FRONTEND_DIR:
+            print("ERROR: Could not find frontend directory!")
+            FRONTEND_DIR = Path(sys._MEIPASS) / 'frontend'  # Will fail, but at least shows the error
+    
     DATA_DIR = Path(os.environ.get('DATA_DIR', Path.home() / 'AIStudyAssistant'))
 else:
+    # Development mode
     FRONTEND_DIR = Path(__file__).parent.parent / 'frontend' / 'dist'
     DATA_DIR = Path(__file__).parent.parent / 'data'
 
@@ -124,8 +156,12 @@ print(f"FRONTEND_DIR: {FRONTEND_DIR}")
 print(f"Frontend exists: {FRONTEND_DIR.exists()}")
 
 if FRONTEND_DIR.exists():
-    files = list(FRONTEND_DIR.rglob('*'))
-    print(f"Frontend files found: {len(files)}")
+    frontend_files = list(FRONTEND_DIR.glob('*'))
+    print(f"Frontend files found: {len(frontend_files)}")
+    if frontend_files:
+        print(f"First 5 files: {[f.name for f in frontend_files[:5]]}")
+else:
+    print(f"WARNING: Frontend directory does not exist!")
 
 # # Initialize database on startup
 # @app.on_event("startup")
