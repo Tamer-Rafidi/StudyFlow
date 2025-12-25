@@ -5,6 +5,8 @@ const log = require('electron-log');
 const path = require('path');
 const axios = require('axios');
 const http = require('http');
+const OllamaManager = require('./ollama-manager');
+const ollamaManager = new OllamaManager();
 
 // Configure logging
 log.transports.file.level = 'info';
@@ -98,6 +100,7 @@ app.on('ready', async () => {
 app.on('before-quit', () => {
   isQuitting = true;
   stopBackend();
+  ollamaManager.stopService();
 });
 
 app.on('window-all-closed', () => {
@@ -253,6 +256,19 @@ function createMenu() {
 // ============================================================================
 
 async function initializeApp() {
+  updateStatus('Initializing...');
+
+  // Step 1: Check for Ollama (optional, user can choose OpenAI)
+  const aiChoice = await ollamaManager.initialize(mainWindow);
+  
+  if (aiChoice === 'cancel') {
+    app.quit();
+    return;
+  }
+  
+  log.info(`User selected AI provider: ${aiChoice}`);
+  
+  // Step 2: Start backend
   updateStatus('Starting backend...');
 
   const backendPath = getBackendPath();
@@ -279,7 +295,8 @@ async function initializeApp() {
       DATA_DIR: userDataDir,
       FRONTEND_DIR: frontendPath,
       PORT: BACKEND_PORT.toString(),
-      PYTHONUNBUFFERED: '1'
+      PYTHONUNBUFFERED: '1',
+      AI_PROVIDER: aiChoice  // Pass the choice to backend
     },
     cwd: path.dirname(backendPath),
     stdio: ['ignore', 'pipe', 'pipe']
