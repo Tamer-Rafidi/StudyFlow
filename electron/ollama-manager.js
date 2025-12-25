@@ -154,39 +154,119 @@ class OllamaManager {
 
     log.info('Starting Ollama service...');
 
-    return new Promise((resolve) => {
-      // Try to start Ollama
-      if (process.platform === 'win32') {
-        // Windows: Ollama runs as a service, just ping it
-        exec('ollama serve', (error) => {
-          if (error) {
-            log.error('Failed to start Ollama:', error);
-            resolve(false);
-          }
+    if (process.platform === 'win32') {
+      // Windows: Try multiple methods to start Ollama
+      
+      // Method 1: Start Ollama GUI app
+      try {
+        exec('start ollama app', (error) => {
+          if (error) log.debug('Method 1 (start ollama app) failed:', error.message);
         });
-      } else if (process.platform === 'darwin') {
-        // Mac: Start Ollama app
+      } catch (e) {
+        log.debug('Method 1 exception:', e.message);
+      }
+      
+      // Method 2: Try ollama serve in background
+      try {
+        spawn('ollama', ['serve'], {
+          detached: true,
+          stdio: 'ignore',
+          shell: true
+        }).unref();
+      } catch (e) {
+        log.debug('Method 2 (ollama serve) exception:', e.message);
+      }
+      
+      // Method 3: Try to start from installation path
+      const possiblePaths = [
+        path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Ollama', 'ollama.exe'),
+        path.join(process.env.PROGRAMFILES || '', 'Ollama', 'ollama.exe'),
+      ];
+      
+      for (const ollamaPath of possiblePaths) {
+        if (fs.existsSync(ollamaPath)) {
+          log.info(`Found Ollama at: ${ollamaPath}`);
+          try {
+            spawn(ollamaPath, ['serve'], {
+              detached: true,
+              stdio: 'ignore'
+            }).unref();
+            break;
+          } catch (e) {
+            log.debug('Failed to start from path:', e.message);
+          }
+        }
+      }
+      
+      // Wait longer for Windows service to start
+      log.info('Waiting for Ollama service to start...');
+      
+      for (let i = 0; i < 15; i++) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        if (await this.checkRunning()) {
+          log.info(`Ollama service started successfully after ${(i + 1) * 2} seconds`);
+          return true;
+        }
+        
+        log.debug(`Still waiting for Ollama... (${(i + 1) * 2}s elapsed)`);
+      }
+      
+      log.warn('Ollama service did not start after 30 seconds');
+      return false;
+      
+    } else if (process.platform === 'darwin') {
+      // macOS: Try multiple methods
+      
+      // Method 1: Open Ollama.app
+      try {
         exec('open -a Ollama', (error) => {
-          if (error) {
-            log.error('Failed to start Ollama:', error);
-            resolve(false);
-          }
+          if (error) log.debug('Method 1 (open -a Ollama) failed:', error.message);
         });
-      } else {
-        // Linux: Start as service
-        this.ollamaProcess = spawn('ollama', ['serve'], {
+      } catch (e) {
+        log.debug('Method 1 exception:', e.message);
+      }
+      
+      // Method 2: Try ollama serve
+      try {
+        spawn('ollama', ['serve'], {
           detached: true,
           stdio: 'ignore'
-        });
-        this.ollamaProcess.unref();
+        }).unref();
+      } catch (e) {
+        log.debug('Method 2 (ollama serve) exception:', e.message);
       }
-
-      // Wait for service to be ready
-      setTimeout(async () => {
-        const running = await this.checkRunning();
-        resolve(running);
-      }, 5000);
-    });
+      
+      // Method 3: Try from Applications folder
+      const appPath = '/Applications/Ollama.app';
+      if (fs.existsSync(appPath)) {
+        try {
+          exec(`open "${appPath}"`, (error) => {
+            if (error) log.debug('Method 3 (open from Applications) failed:', error.message);
+          });
+        } catch (e) {
+          log.debug('Method 3 exception:', e.message);
+        }
+      }
+      
+      log.info('Waiting for Ollama service to start...');
+      
+      for (let i = 0; i < 10; i++) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        if (await this.checkRunning()) {
+          log.info(`Ollama service started successfully after ${(i + 1) * 2} seconds`);
+          return true;
+        }
+        
+        log.debug(`Still waiting for Ollama... (${(i + 1) * 2}s elapsed)`);
+      }
+      
+      log.warn('Ollama service did not start after 20 seconds');
+      return false;
+    }
+    
+    return false;
   }
 
   /**
@@ -195,7 +275,11 @@ class OllamaManager {
   stopService() {
     if (this.ollamaProcess) {
       log.info('Stopping Ollama service');
-      this.ollamaProcess.kill();
+      try {
+        this.ollamaProcess.kill();
+      } catch (e) {
+        log.debug('Error killing Ollama process:', e.message);
+      }
       this.ollamaProcess = null;
     }
   }
