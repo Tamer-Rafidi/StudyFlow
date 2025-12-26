@@ -48,11 +48,24 @@ class OllamaManager {
    */
   async checkRunning() {
     try {
-      const response = await axios.get(`${OLLAMA_URL}/api/tags`, { timeout: 3000 });
+      const response = await axios.get(`${OLLAMA_URL}/api/tags`, { 
+        timeout: 5000,  // Increased timeout
+        validateStatus: (status) => status < 500  // Accept any non-500 response
+      });
+      
       this.isRunning = response.status === 200;
-      log.info('Ollama is running:', this.isRunning);
+      log.info('Ollama running check:', this.isRunning);
       return this.isRunning;
     } catch (error) {
+      // More detailed error logging
+      if (error.code === 'ECONNREFUSED') {
+        log.debug('Ollama not running (connection refused)');
+      } else if (error.code === 'ETIMEDOUT') {
+        log.debug('Ollama check timed out');
+      } else {
+        log.debug('Ollama check error:', error.message);
+      }
+      
       this.isRunning = false;
       return false;
     }
