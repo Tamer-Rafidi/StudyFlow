@@ -1244,7 +1244,7 @@ def submit_exam(exam_id: str, answers: dict):
         total = len(questions)
         percentage = round((correct_count / total) * 100) if total > 0 else 0
         
-        print(f"✅ Exam submitted: {correct_count}/{total} ({percentage}%)")
+        print(f"Exam submitted: {correct_count}/{total} ({percentage}%)")
         
         # Create attempt record
         attempt = {
