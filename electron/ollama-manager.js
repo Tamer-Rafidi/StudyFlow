@@ -47,28 +47,75 @@ class OllamaManager {
    * Check if Ollama service is running
    */
   async checkRunning() {
+    const nativeResult = await this.checkRunningNative();
+  
+    if (nativeResult) {
+      this.isRunning = true;
+      log.info('✓ Ollama is running (native check)');
+      return true;
+    }
+    
     try {
+      log.debug(`Checking Ollama at ${OLLAMA_URL}/api/tags`);
+      
       const response = await axios.get(`${OLLAMA_URL}/api/tags`, { 
-        timeout: 5000,  // Increased timeout
-        validateStatus: (status) => status < 500  // Accept any non-500 response
+        timeout: 5000,
+        validateStatus: () => true  // Accept any status code
       });
       
+      log.info(`Ollama check response: status=${response.status}`);
+      
       this.isRunning = response.status === 200;
-      log.info('Ollama running check:', this.isRunning);
+      
+      if (this.isRunning) {
+        log.info('✓ Ollama is running');
+      } else {
+        log.warn(`Ollama responded but with status ${response.status}`);
+      }
+      
       return this.isRunning;
     } catch (error) {
-      // More detailed error logging
-      if (error.code === 'ECONNREFUSED') {
-        log.debug('Ollama not running (connection refused)');
-      } else if (error.code === 'ETIMEDOUT') {
-        log.debug('Ollama check timed out');
-      } else {
-        log.debug('Ollama check error:', error.message);
-      }
+      log.error('Ollama check failed:', {
+        code: error.code,
+        message: error.message,
+        url: OLLAMA_URL
+      });
       
       this.isRunning = false;
       return false;
     }
+  }
+  
+  checkRunningNative() {
+    return new Promise((resolve) => {
+      const http = require('http');
+      
+      const options = {
+        hostname: 'localhost',
+        port: OLLAMA_PORT,
+        path: '/api/tags',
+        method: 'GET',
+        timeout: 3000
+      };
+
+      const req = http.request(options, (res) => {
+        log.info(`Native Ollama check: status=${res.statusCode}`);
+        resolve(res.statusCode === 200);
+      });
+
+      req.on('error', (error) => {
+        log.debug('Native Ollama check error:', error.code);
+        resolve(false);
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        log.debug('Native Ollama check timeout');
+        resolve(false);
+      });
+
+      req.end();
+    });
   }
 
   /**
