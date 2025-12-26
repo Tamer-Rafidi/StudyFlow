@@ -11,7 +11,7 @@ const fs = require('fs');
 const log = require('electron-log');
 
 const OLLAMA_PORT = 11434;
-const OLLAMA_URL = `http://localhost:${OLLAMA_PORT}`;
+const OLLAMA_URL = `http://127.0.0.1:${OLLAMA_PORT}`;
 
 class OllamaManager {
   constructor() {
@@ -54,7 +54,7 @@ class OllamaManager {
       log.info('✓ Ollama is running (native check)');
       return true;
     }
-    
+
     try {
       log.debug(`Checking Ollama at ${OLLAMA_URL}/api/tags`);
       
@@ -87,36 +87,37 @@ class OllamaManager {
   }
   
   checkRunningNative() {
-    return new Promise((resolve) => {
-      const http = require('http');
-      
-      const options = {
-        hostname: 'localhost',
-        port: OLLAMA_PORT,
-        path: '/api/tags',
-        method: 'GET',
-        timeout: 3000
-      };
+  return new Promise((resolve) => {
+    const http = require('http');
+    
+    const options = {
+      hostname: '127.0.0.1',  
+      port: OLLAMA_PORT,
+      path: '/api/tags',
+      method: 'GET',
+      timeout: 3000,
+      family: 4  // Force IPv4
+    };
 
-      const req = http.request(options, (res) => {
-        log.info(`Native Ollama check: status=${res.statusCode}`);
-        resolve(res.statusCode === 200);
-      });
-
-      req.on('error', (error) => {
-        log.debug('Native Ollama check error:', error.code);
-        resolve(false);
-      });
-
-      req.on('timeout', () => {
-        req.destroy();
-        log.debug('Native Ollama check timeout');
-        resolve(false);
-      });
-
-      req.end();
+    const req = http.request(options, (res) => {
+      log.info(`Native Ollama check: status=${res.statusCode}`);
+      resolve(res.statusCode === 200);
     });
-  }
+
+    req.on('error', (error) => {
+      log.debug('Native Ollama check error:', error.code);
+      resolve(false);
+    });
+
+    req.on('timeout', () => {
+      req.destroy();
+      log.debug('Native Ollama check timeout');
+      resolve(false);
+    });
+
+    req.end();
+  });
+}
 
   /**
    * Get list of downloaded models
