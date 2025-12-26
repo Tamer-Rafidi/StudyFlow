@@ -51,7 +51,7 @@ class OllamaManager {
   
     if (nativeResult) {
       this.isRunning = true;
-      log.info('✓ Ollama is running (native check)');
+      log.info('Ollama is running (native check)');
       return true;
     }
 
@@ -148,7 +148,7 @@ class OllamaManager {
       detail: 
         'Ollama provides free local AI without requiring an API key.\n\n' +
         'Would you like to:\n' +
-        '• Download Ollama (free, ~500MB)\n' +
+        '• Download Ollama (free, ~5GB)\n' +
         '• Use OpenAI instead (requires API key)\n' +
         '• Cancel and exit',
       buttons: ['Download Ollama', 'Use OpenAI', 'Cancel'],

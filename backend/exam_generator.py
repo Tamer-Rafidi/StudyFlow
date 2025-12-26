@@ -339,13 +339,35 @@ def save_exam(exam_data: Dict, filename: str):
     """Save exam to JSON file"""
     import json
     from pathlib import Path
-
-    Path("exams").mkdir(exist_ok=True)
-    filepath = Path("exams") / filename
-
+    import os
+    
+    # Get DATA_DIR from environment - should match main.py
+    data_dir_str = os.environ.get('DATA_DIR')
+    
+    if data_dir_str:
+        data_dir = Path(data_dir_str)
+    else:
+        # Fallback - match main.py's logic
+        import sys
+        if getattr(sys, 'frozen', False):
+            # Production: use AppData
+            import getpass
+            username = getpass.getuser()
+            data_dir = Path(f'C:/Users/{username}/AppData/Roaming/StudyFlow')
+        else:
+            # Development
+            data_dir = Path(__file__).parent.parent / 'data'
+    
+    exams_dir = data_dir / "exams"
+    exams_dir.mkdir(exist_ok=True, parents=True)
+    
+    filepath = exams_dir / filename
+    
+    print(f"Saving exam to: {filepath}")  # Debug logging
+    
     with open(filepath, 'w', encoding='utf-8') as f:
         json.dump(exam_data, f, indent=2, ensure_ascii=False)
-
+    
     return str(filepath)
 
 
@@ -353,9 +375,33 @@ def load_exam(filename: str) -> Dict:
     """Load exam from JSON file"""
     import json
     from pathlib import Path
-
-    filepath = Path("exams") / filename
-
+    import os
+    
+    # Get DATA_DIR from environment
+    data_dir_str = os.environ.get('DATA_DIR')
+    
+    if data_dir_str:
+        data_dir = Path(data_dir_str)
+    else:
+        # Fallback
+        import sys
+        if getattr(sys, 'frozen', False):
+            # Production: use AppData
+            import getpass
+            username = getpass.getuser()
+            data_dir = Path(f'C:/Users/{username}/AppData/Roaming/StudyFlow')
+        else:
+            # Development
+            data_dir = Path(__file__).parent.parent / 'data'
+    
+    exams_dir = data_dir / "exams"
+    filepath = exams_dir / filename
+    
+    print(f"Loading exam from: {filepath}")  
+    
+    if not filepath.exists():
+        raise FileNotFoundError(f"Exam not found: {filepath}")
+    
     with open(filepath, 'r', encoding='utf-8') as f:
         return json.load(f)
 

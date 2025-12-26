@@ -918,6 +918,9 @@ def generate_exam_endpoint(
 ):
     """Generate a new exam with selected AI model, documents, and question types"""
     
+    print(f"DATA_DIR: {DATA_DIR}")
+    print(f"Exams folder: {DATA_DIR / 'exams'}")
+    
     # Get AI service based on user preference
     ai_service = get_ai_service_from_header(x_ai_model, x_openai_model, x_openai_api_key)
     print(f"Generating exam with {ai_service.provider.upper()}")
@@ -1034,6 +1037,8 @@ def generate_exam_endpoint(
         
         # Save exam with proper error handling
         filename = f"{exam_id}.json"
+        exam_folder = DATA_DIR / "exams"
+        exam_folder.mkdir(exist_ok=True, parents=True)  # Ensure folder exists
         filepath = save_exam(exam_data, filename)
         print(f"Exam saved to: {filepath}")
         
@@ -1323,6 +1328,11 @@ def reset_exam_attempts(exam_id: str):
 @app.delete("/api/exams/{exam_id}")
 def delete_exam(exam_id: str):
     """Delete a specific exam by its unique ID"""
+    # Add stack trace to see WHO is calling delete
+    import traceback
+    print(f"DELETE called for exam: {exam_id}")
+    print(f"Call stack:\n{''.join(traceback.format_stack())}")
+
     try:
         # Ensure .json extension
         if not exam_id.endswith('.json'):
