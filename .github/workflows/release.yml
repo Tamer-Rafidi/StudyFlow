@@ -19,13 +19,9 @@ jobs:
           - os: windows-latest
             platform: win
             artifact: '*.exe'
-          # Disable macOS and Linux until Windows is working
-          # - os: macos-latest
-          #   platform: mac
-          #   artifact: '*.dmg'
-          # - os: ubuntu-latest
-          #   platform: linux
-          #   artifact: '*.{AppImage,deb}'
+          - os: macos-latest
+            platform: mac
+            artifact: '*.dmg'
     
     steps:
       - name: Checkout code

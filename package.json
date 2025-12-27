@@ -22,7 +22,6 @@
   "build": {
     "appId": "com.Tamer-Rafid.StudyFlow",
     "productName": "StudyFlow",
-    "icon": null,
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -53,7 +52,7 @@
           ]
         }
       ],
-      "icon": null,
+      "icon": "build/icons/icon.ico",
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
@@ -65,7 +64,7 @@
           ]
         }
       ],
-      "icon": null,
+      "icon": "build/icons/icon.icns",
       "category": "public.app-category.education",
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
@@ -75,24 +74,6 @@
           "to": "backend/backend"
         }
       ]
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "category": "Education",
-      "artifactName": "${productName}-${version}.${ext}",
-      "extraResources": [
-        {
-          "from": "backend/dist/backend",
-          "to": "backend/backend",
-          "filter": [
-            "**/*"
-          ]
-        }
-      ],
-      "asar": true
     },
     "nsis": {
       "oneClick": false,
