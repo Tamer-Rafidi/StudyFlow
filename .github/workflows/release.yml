@@ -141,6 +141,16 @@ jobs:
           npm install
           npm run build
       
+      - name: Verify icon exists
+        if: matrix.platform == 'win'
+        run: |
+          if (!(Test-Path "icon.ico")) {
+            Write-Error "Icon file not found!"
+            exit 1
+          }
+          Write-Host "Icon file found"
+        shell: pwsh
+        
       - name: Build Electron app (without publish)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
