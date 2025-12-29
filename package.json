@@ -52,7 +52,7 @@
           ]
         }
       ],
-      "icon": "build/icons/icon.ico",
+      "icon": "icon.ico",
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
@@ -64,7 +64,7 @@
           ]
         }
       ],
-      "icon": "build/icons/icon.icns",
+      "icon": "icon.icns",
       "category": "public.app-category.education",
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
