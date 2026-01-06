@@ -167,6 +167,7 @@ jobs:
           files: |
             dist/*.exe
             dist/*.blockmap
+            dist/*.dmg
           draft: false
           prerelease: false
         env:
