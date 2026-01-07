@@ -74,7 +74,8 @@ StudyFlow is distributed as a prebuilt desktop application, so no development se
 
 2. Download the installer for your platform:
   - Windows: .exe
-- macOS: .dmg
+- Intel Macs: .dmg
+- Apple Silicon Macs (M1, M2, M3): arm64.dmg
 
 3. Run the installer and follow the setup prompts.
 
