@@ -68,13 +68,7 @@
       "icon": "icon.icns",
       "category": "public.app-category.education",
       "hardenedRuntime": false,
-      "gatekeeperAssess": false,
-      "extraResources": [
-        {
-          "from": "backend/dist/backend",
-          "to": "backend/backend"
-        }
-      ]
+      "gatekeeperAssess": false
     },
     "nsis": {
       "oneClick": false,

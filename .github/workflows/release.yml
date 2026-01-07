@@ -105,6 +105,16 @@ jobs:
           Write-Host "Waiting for file to be released by antivirus..."
           Start-Sleep -Seconds 10
         shell: pwsh
+
+      - name: Copy backend to staging (Mac)
+        if: matrix.platform == 'mac'
+        run: |
+          mkdir -p backend-staging
+          cp backend/dist/backend backend-staging/backend
+          chmod +x backend-staging/backend
+          echo "Backend copied to staging"
+          ls -la backend-staging/
+        shell: bash
       
       - name: Verify backend build (Unix)
         if: matrix.platform != 'win'
@@ -154,12 +164,9 @@ jobs:
       - name: Build Electron app (without publish)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if (Test-Path dist) { Remove-Item -Recurse -Force dist }
-          
+        run: 
           # Build without publishing (just create the .exe)
           npm run build:${{ matrix.platform }}
-        shell: pwsh
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -168,6 +175,7 @@ jobs:
             dist/*.exe
             dist/*.blockmap
             dist/*.dmg
+            dist/latest*.yml
           draft: false
           prerelease: false
         env:
