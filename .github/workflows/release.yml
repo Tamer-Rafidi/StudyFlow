@@ -19,7 +19,7 @@ jobs:
           - os: windows-latest
             platform: win
             artifact: '*.exe'
-          - os: macos-13  
+          - os: macos-12  
             platform: mac
             artifact: '*.dmg'
             arch: x64
