@@ -19,9 +19,14 @@ jobs:
           - os: windows-latest
             platform: win
             artifact: '*.exe'
-          - os: macos-latest
+          - os: macos-13  
             platform: mac
             artifact: '*.dmg'
+            arch: x64
+          - os: macos-latest
+            platform: mac-arm64
+            artifact: '*.dmg'
+            arch: arm64
     
     steps:
       - name: Checkout code
@@ -161,12 +166,18 @@ jobs:
           Write-Host "Icon file found"
         shell: pwsh
         
-      - name: Build Electron app (without publish)
+      - name: Build Electron app
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: 
-          # Build without publishing (just create the .exe)
-          npm run build:${{ matrix.platform }}
+        run: |
+          if [ "${{ matrix.platform }}" = "mac-intel" ]; then
+            npm run build:mac -- --x64
+          elif [ "${{ matrix.platform }}" = "mac-arm" ]; then
+            npm run build:mac -- --arm64
+          else
+            npm run build:${{ matrix.platform }}
+          fi
+        shell: bash
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
