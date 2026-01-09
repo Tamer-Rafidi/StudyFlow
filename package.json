@@ -73,7 +73,10 @@
       "createStartMenuShortcut": true,
       "shortcutName": "StudyFlow",
       "perMachine": false,
-      "allowElevation": true
+      "allowElevation": true,
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": false,
+      "include": "build/installer.nsh"
     }
   },
   "dependencies": {
