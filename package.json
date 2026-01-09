@@ -72,7 +72,8 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "StudyFlow",
-      "perMachine": false
+      "perMachine": false,
+      "allowElevation": true
     }
   },
   "dependencies": {

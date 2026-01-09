@@ -81,7 +81,17 @@ if (!IS_DEV && app.isPackaged) {
       defaultId: 0
     }).then((result) => {
       if (result.response === 0) {
-        setImmediate(() => autoUpdater.quitAndInstall());
+        // Force quit before installing
+        isQuitting = true;
+        
+        // Stop backend cleanly
+        stopBackend();
+        
+        // Give backend time to close
+        setTimeout(() => {
+          // Quit and install with force close
+          autoUpdater.quitAndInstall(false, true);  // (isSilent, isForceRunAfter)
+        }, 1000);
       }
     });
   });
