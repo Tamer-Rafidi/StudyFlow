@@ -116,7 +116,7 @@ const Dashboard: FC = () => {
                   You have <span className="text-primary-400 font-semibold">{unmastered} cards</span> to review today
                 </>
               ) : (
-                "You're all caught up! Great work! 🎉"
+                "You're all caught up! Great work!"
               )}
             </p>
           </div>
