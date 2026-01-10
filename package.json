@@ -76,7 +76,7 @@
       "allowElevation": true,
       "deleteAppDataOnUninstall": false,
       "runAfterFinish": false,
-      "include": "build/installer.nsh"
+      "include": "installer.nsh"
     }
   },
   "dependencies": {
