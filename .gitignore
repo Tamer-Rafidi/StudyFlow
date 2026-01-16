@@ -1,0 +1,66 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+venv/
+env/
+.venv/
+
+# Build outputs
+dist/
+frontend/dist/
+frontend/build/
+backend/dist/
+backend/build/
+build/
+
+# Python source code
+backend/*.py
+**/__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Frontend/Node source code
+frontend/src/
+electron/*.js
+!electron/main.js
+!electron/preload.js
+
+# TypeScript/JavaScript compiled
+*.js
+!*.config.js
+!postcss.config.js
+*.jsx
+*.ts
+*.tsx
+!tsconfig*.json
+
+# Data files
+uploads/
+summaries/
+flashcards/
+exams/
+*.db
+*.sqlite
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Package lock files
+package-lock.json
+yarn.lock

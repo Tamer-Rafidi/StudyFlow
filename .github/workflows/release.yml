@@ -1,0 +1,200 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write  
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+            artifact: '*.exe'
+          - os: macos-15-intel  
+            platform: mac
+            artifact: '*.dmg'
+            arch: x64
+          - os: macos-latest
+            platform: mac-arm64
+            artifact: '*.dmg'
+            arch: arm64
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Python dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Build backend
+        run: |
+          cd backend
+          pyinstaller backend.spec
+      
+      # Verify backend was built
+      - name: Verify backend build (Windows)
+        if: matrix.platform == 'win'
+        run: |
+          if (!(Test-Path "backend/dist/backend.exe")) {
+            Write-Error "Backend executable not found!"
+            exit 1
+          }
+          Write-Host "Backend executable found"
+          Write-Host "Waiting for file handles to release..."
+          Start-Sleep -Seconds 5
+        shell: pwsh
+      
+      - name: Copy backend to staging (Windows)
+        if: matrix.platform == 'win'
+        run: |
+          # Create staging directory
+          New-Item -ItemType Directory -Force -Path "backend-staging"
+          
+          # Disable Windows Defender real-time monitoring for build directories
+          # This prevents file locking during the build
+          try {
+            Add-MpPreference -ExclusionPath "$PWD\backend-staging" -ErrorAction SilentlyContinue
+            Add-MpPreference -ExclusionPath "$PWD\dist" -ErrorAction SilentlyContinue
+            Write-Host "Added Windows Defender exclusions"
+          } catch {
+            Write-Host "Could not add Defender exclusions (may require admin)"
+          }
+          
+          # Use robocopy which handles locked files better
+          robocopy "backend/dist" "backend-staging" "backend.exe" /COPY:DAT /R:3 /W:2
+          
+          # robocopy returns 1 for successful copy, 0 for no changes, 8+ for errors
+          # Exit codes 0-7 are success, 8+ are failures
+          $exitCode = $LASTEXITCODE
+          if ($exitCode -ge 8) {
+            Write-Error "Failed to copy backend.exe (exit code: $exitCode)"
+            exit 1
+          }
+          
+          # Reset exit code to 0 for GitHub Actions
+          $LASTEXITCODE = 0
+          
+          Write-Host "Backend copied to staging successfully (robocopy exit code: $exitCode)"
+          
+          # Verify the file was copied
+          if (!(Test-Path "backend-staging/backend.exe")) {
+            Write-Error "backend.exe not found in staging directory!"
+            exit 1
+          }
+          
+          Write-Host "Verified: backend.exe exists in staging"
+          
+          # Wait longer for any antivirus scanning to complete
+          Write-Host "Waiting for file to be released by antivirus..."
+          Start-Sleep -Seconds 10
+        shell: pwsh
+
+      - name: Copy backend to staging (Mac)
+        if: matrix.platform == 'mac' || matrix.platform == 'mac-arm64'
+        run: |
+          mkdir -p backend-staging
+          cp backend/dist/backend backend-staging/backend
+          chmod +x backend-staging/backend
+          echo "Backend copied to staging"
+          ls -la backend-staging/
+        shell: bash
+      
+      - name: Verify backend build (Unix)
+        if: matrix.platform != 'win'
+        run: |
+          if [ ! -f "backend/dist/backend" ]; then
+            echo "Backend executable not found!"
+            exit 1
+          fi
+          echo "Backend executable found"
+          chmod +x backend/dist/backend
+      
+      - name: Install Node dependencies
+        run: npm install
+      
+      - name: Check build resources
+        run: |
+          echo "Checking for build resources..."
+          
+          # COMPLETELY REMOVE build directory to prevent icon issues
+          if (Test-Path "build") {
+            Write-Host "Removing build directory to prevent icon conversion issues..."
+            Remove-Item -Recurse -Force "build"
+          }
+          
+          # Recreate empty build directory
+          New-Item -ItemType Directory -Force -Path "build" | Out-Null
+          
+          Write-Host "Build directory cleaned"
+        shell: pwsh
+      
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+      
+      - name: Verify icon exists
+        if: matrix.platform == 'win'
+        run: |
+          if (!(Test-Path "icon.ico")) {
+            Write-Error "Icon file not found!"
+            exit 1
+          }
+          Write-Host "Icon file found"
+        shell: pwsh
+        
+      - name: Build Electron app
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ matrix.arch }}" = "x64" ]; then
+            npm run build:mac -- --x64
+          elif [ "${{ matrix.arch }}" = "arm64" ]; then
+            npm run build:mac -- --arm64
+          else
+            npm run build:${{ matrix.platform }}
+          fi
+        shell: bash
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*.exe
+            dist/*.blockmap
+            dist/*.dmg
+            dist/latest*.yml
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-build
+          path: dist/${{ matrix.artifact }}
+          if-no-files-found: warn
