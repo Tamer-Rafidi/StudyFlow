@@ -26,13 +26,13 @@ backend/*.py
 
 
 # TypeScript/JavaScript compiled
-*.js
 !*.config.js
 !postcss.config.js
 !vite.config.ts
 *.jsx
 !tsconfig*.json
 !electron/main.js
+
 # Data files
 uploads/
 summaries/
