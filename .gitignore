@@ -15,6 +15,7 @@ build/
 
 # Python source code
 backend/*.py
+!backend/main.py
 **/__pycache__/
 *.pyc
 *.pyo
