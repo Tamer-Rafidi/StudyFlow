@@ -22,7 +22,7 @@ backend/*.py
 *.egg-info/
 
 # Frontend/Node source code
-frontend/src/
+!frontend/src/
 electron/*.js
 !electron/main.js
 !electron/preload.js
@@ -31,6 +31,7 @@ electron/*.js
 *.js
 !*.config.js
 !postcss.config.js
+!vite.config.ts
 *.jsx
 *.ts
 *.tsx
