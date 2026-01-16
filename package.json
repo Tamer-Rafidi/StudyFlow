@@ -1,6 +1,6 @@
 {
   "name": "StudyFlow",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "AI-powered study assistant",
   "main": "electron/main.js",
   "author": "Tamer Rafidi <tamer.rafidi10@gmail.com.com>",
