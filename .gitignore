@@ -23,9 +23,7 @@ backend/*.py
 
 # Frontend/Node source code
 !frontend/src/
-electron/*.js
-!electron/main.js
-!electron/preload.js
+
 
 # TypeScript/JavaScript compiled
 *.js
@@ -34,7 +32,7 @@ electron/*.js
 !vite.config.ts
 *.jsx
 !tsconfig*.json
-
+!electron/main.js
 # Data files
 uploads/
 summaries/
