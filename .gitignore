@@ -62,5 +62,4 @@ Thumbs.db
 .DS_Store
 
 # Package lock files
-package-lock.json
 yarn.lock
