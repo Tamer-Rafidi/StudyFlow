@@ -33,7 +33,6 @@ electron/*.js
 !postcss.config.js
 !vite.config.ts
 *.jsx
-*.tsx
 !tsconfig*.json
 
 # Data files
