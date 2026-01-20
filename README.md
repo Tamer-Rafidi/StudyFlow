@@ -1,4 +1,4 @@
-# StudyFlow — AI-Powered Study Assistant
+# StudyFlow — Intelligent Study and Learning Platform
 
 StudyFlow is an AI-powered desktop study assistant that helps students turn lecture notes and textbooks into actionable learning materials. It extracts content from PDFs, generates summaries, flashcards, and practice exams, and provides a conversational AI tutor — all packaged in a cross-platform Electron desktop app.
 
