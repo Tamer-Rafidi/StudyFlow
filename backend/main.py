@@ -1593,96 +1593,176 @@ async def clear_all_data(db: Session = Depends(get_db)):
         # Import all models needed
         from database import Course, Document, Flashcard, Summary
         
-        print("Starting data deletion...")
+        print("\n" + "=" * 80)
+        print("CLEARING ALL DATA")
+        print("=" * 80)
+        
+        # CRITICAL: Print what DATA_DIR we're using
+        print(f"\n DATA_DIR: {DATA_DIR}")
+        print(f" DATA_DIR exists: {DATA_DIR.exists()}")
+        print(f" DATA_DIR absolute path: {DATA_DIR.absolute()}")
         
         # Delete all data from database tables in correct order 
         
         # 1. Delete flashcards first 
         flashcard_count = db.query(Flashcard).count()
         db.query(Flashcard).delete()
-        print(f"Deleted {flashcard_count} flashcards")
+        print(f"\n Deleted {flashcard_count} flashcards from database")
         
         # 2. Delete summaries 
         summary_count = db.query(Summary).count()
         summaries = db.query(Summary).all()
+        summary_files_deleted = 0
         for summary in summaries:
             # Delete summary files
             if summary.file_path and os.path.exists(summary.file_path):
                 try:
                     os.unlink(summary.file_path)
+                    summary_files_deleted += 1
                 except Exception as e:
-                    print(f"Warning: Could not delete summary file {summary.file_path}: {e}")
+                    print(f"   Could not delete summary file {summary.file_path}: {e}")
         db.query(Summary).delete()
-        print(f"Deleted {summary_count} summaries")
+        print(f" Deleted {summary_count} summaries from database")
+        print(f" Deleted {summary_files_deleted} summary files from disk")
         
         # 3. Delete documents 
         doc_count = db.query(Document).count()
         documents = db.query(Document).all()
+        doc_files_deleted = 0
         for doc in documents:
             # Delete document files
             if doc.file_path and os.path.exists(doc.file_path):
                 try:
                     os.unlink(doc.file_path)
+                    doc_files_deleted += 1
                 except Exception as e:
-                    print(f"Warning: Could not delete document file {doc.file_path}: {e}")
+                    print(f"   Could not delete document file {doc.file_path}: {e}")
         db.query(Document).delete()
-        print(f"Deleted {doc_count} documents")
+        print(f" Deleted {doc_count} documents from database")
+        print(f" Deleted {doc_files_deleted} document files from disk")
         
         # 4. Delete courses
         course_count = db.query(Course).count()
         db.query(Course).delete()
-        print(f"Deleted {course_count} courses")
+        print(f" Deleted {course_count} courses from database")
         
-        # Commit all deletions
+        # Commit all database deletions
         db.commit()
-        print("Database changes committed")
+        print(f"\n All database changes committed")
         
-        # 5. Clear exam files directory
-        exams_dir = "exams"
+        print("\n" + "=" * 80)
+        print("CLEARING FILE DIRECTORIES")
+        print("=" * 80)
+        
+        # 5. Clear exam files directory - THIS IS THE CRITICAL PART
+        # MUST use Path(DATA_DIR / "exams") not just "exams"
+        exams_dir = Path(DATA_DIR) / "exams"
+        
+        print(f"\n Exams directory: {exams_dir}")
+        print(f" Exams directory absolute: {exams_dir.absolute()}")
+        print(f" Exams directory exists: {exams_dir.exists()}")
+        
         exam_count = 0
-        if os.path.exists(exams_dir):
-            for filename in os.listdir(exams_dir):
-                file_path = os.path.join(exams_dir, filename)
+        if exams_dir.exists():
+            # List all files first
+            all_files = list(exams_dir.iterdir())
+            print(f" Found {len(all_files)} items in exams directory")
+            
+            for file_path in all_files:
+                print(f"    {file_path.name} (is_file: {file_path.is_file()})")
+                
                 try:
-                    if os.path.isfile(file_path):
-                        os.unlink(file_path)
+                    if file_path.is_file():
+                        print(f"        Deleting: {file_path.name}")
+                        file_path.unlink()
                         exam_count += 1
+                        print(f"       Deleted successfully")
+                    elif file_path.is_dir():
+                        print(f"        Skipping directory: {file_path.name}")
                 except Exception as e:
-                    print(f'Warning: Failed to delete {file_path}. Reason: {e}')
-        print(f"Deleted {exam_count} exam files")
+                    print(f"       Failed to delete {file_path.name}: {e}")
+                    import traceback
+                    traceback.print_exc()
+        else:
+            print(f" Exams directory does not exist at: {exams_dir}")
+            print(f"   Creating it now...")
+            exams_dir.mkdir(parents=True, exist_ok=True)
+            print(f"    Created")
         
-        # 6. Clear any remaining orphaned files in uploads
-        uploads_dir = "uploads"
+        print(f"\n Deleted {exam_count} exam files")
+        
+        # 6. Clear uploads directory
+        uploads_dir = Path(DATA_DIR) / "uploads"
+        print(f"\n Uploads directory: {uploads_dir}")
+        print(f" Uploads directory exists: {uploads_dir.exists()}")
+        
         upload_count = 0
-        if os.path.exists(uploads_dir):
-            for filename in os.listdir(uploads_dir):
-                file_path = os.path.join(uploads_dir, filename)
+        if uploads_dir.exists():
+            all_files = list(uploads_dir.iterdir())
+            print(f" Found {len(all_files)} items in uploads directory")
+            
+            for file_path in all_files:
                 try:
-                    if os.path.isfile(file_path) or os.path.islink(file_path):
-                        os.unlink(file_path)
+                    if file_path.is_file() or file_path.is_symlink():
+                        file_path.unlink()
                         upload_count += 1
-                    elif os.path.isdir(file_path):
+                    elif file_path.is_dir():
                         shutil.rmtree(file_path)
                         upload_count += 1
                 except Exception as e:
-                    print(f'Warning: Failed to delete {file_path}. Reason: {e}')
-        print(f"Deleted {upload_count} uploaded files")
+                    print(f"    Failed to delete {file_path.name}: {e}")
+        else:
+            uploads_dir.mkdir(parents=True, exist_ok=True)
+        
+        print(f" Deleted {upload_count} uploaded files/folders")
         
         # 7. Clear summaries directory
-        summaries_dir = "summaries"
+        summaries_dir = Path(DATA_DIR) / "summaries"
+        print(f"\n Summaries directory: {summaries_dir}")
+        print(f" Summaries directory exists: {summaries_dir.exists()}")
+        
         summary_file_count = 0
-        if os.path.exists(summaries_dir):
-            for filename in os.listdir(summaries_dir):
-                file_path = os.path.join(summaries_dir, filename)
+        if summaries_dir.exists():
+            all_files = list(summaries_dir.iterdir())
+            print(f" Found {len(all_files)} items in summaries directory")
+            
+            for file_path in all_files:
                 try:
-                    if os.path.isfile(file_path):
-                        os.unlink(file_path)
+                    if file_path.is_file():
+                        file_path.unlink()
                         summary_file_count += 1
                 except Exception as e:
-                    print(f'   Warning: Failed to delete {file_path}. Reason: {e}')
-        print(f"Deleted {summary_file_count} summary files")
+                    print(f"    Failed to delete {file_path.name}: {e}")
+        else:
+            summaries_dir.mkdir(parents=True, exist_ok=True)
         
-        print("All data cleared successfully!")
+        print(f" Deleted {summary_file_count} summary files")
+        
+        # 8. Clear flashcards directory (if it exists)
+        flashcards_dir = Path(DATA_DIR) / "flashcards"
+        flashcard_file_count = 0
+        if flashcards_dir.exists():
+            all_files = list(flashcards_dir.iterdir())
+            for file_path in all_files:
+                try:
+                    if file_path.is_file():
+                        file_path.unlink()
+                        flashcard_file_count += 1
+                except Exception as e:
+                    print(f"    Failed to delete {file_path.name}: {e}")
+            print(f" Deleted {flashcard_file_count} flashcard files")
+        
+        print("\n" + "=" * 80)
+        print(" ALL DATA CLEARED SUCCESSFULLY")
+        print("=" * 80)
+        print(f"\n Summary:")
+        print(f"   Courses: {course_count}")
+        print(f"   Documents: {doc_count} (DB) + {doc_files_deleted} (files)")
+        print(f"   Flashcards: {flashcard_count} (DB) + {flashcard_file_count} (files)")
+        print(f"   Summaries: {summary_count} (DB) + {summary_file_count} (files)")
+        print(f"   Exams: {exam_count} (files)")
+        print(f"   Uploads: {upload_count} (files/folders)")
+        print("=" * 80 + "\n")
         
         return {
             "status": "success",
@@ -1694,13 +1774,13 @@ async def clear_all_data(db: Session = Depends(get_db)):
                 "summaries": summary_count,
                 "exams": exam_count,
                 "uploaded_files": upload_count,
-                "summary_files": summary_file_count
+                "summary_files": summary_file_count,
             }
         }
         
     except Exception as e:
         db.rollback()
-        print(f"Error clearing data: {str(e)}")
+        print(f"\n ERROR clearing data: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(

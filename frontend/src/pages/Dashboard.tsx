@@ -108,7 +108,7 @@ const Dashboard: FC = () => {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">
-              {getGreeting()}, {username}! 👋
+              {getGreeting()}, {username}!
             </h1>
             <p className="text-gray-400 text-lg">
               {unmastered > 0 ? (
@@ -116,7 +116,7 @@ const Dashboard: FC = () => {
                   You have <span className="text-primary-400 font-semibold">{unmastered} cards</span> to review today
                 </>
               ) : (
-                "You're all caught up! Great work! 🎉"
+                "You're all caught up! Great work!"
               )}
             </p>
           </div>
